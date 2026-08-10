@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命工程 AI</title>
+
+<style>
+body{
+background:#111827;
+color:#fff;
+font-family:Arial,"Microsoft YaHei";
+margin:0;
+padding:40px;
+}
+
+.box{
+max-width:900px;
+margin:auto;
+background:#1f2937;
+padding:30px;
+border-radius:20px;
+}
+
+h1{
+font-size:40px;
+}
+
+textarea{
+width:100%;
+height:180px;
+background:#111827;
+color:white;
+border:1px solid #374151;
+border-radius:10px;
+padding:15px;
+font-size:16px;
+}
+
+button{
+margin-top:20px;
+padding:15px 30px;
+border:0;
+border-radius:10px;
+background:white;
+color:#111;
+font-size:18px;
+cursor:pointer;
+}
+
+#result{
+margin-top:30px;
+white-space:pre-wrap;
+line-height:1.8;
+}
+</style>
+
+</head>
+
+
+<body>
+
+<div class="box">
+
+<h1>生命工程 AI</h1>
+
+<p>
+你的内容运营智能助手
+</p>
+
+<textarea id="input"
+placeholder="输入你的需求，例如：
+帮我写一个丹功短视频爆款脚本
+"></textarea>
+
+
+<button onclick="runAI()">
+开始创作
+</button>
+
+
+<div id="result"></div>
+
+
+</div>
+
+
+<script>
+
+async function runAI(){
+
+const input=document.getElementById("input").value;
+
+const result=document.getElementById("result");
+
+result.innerHTML="正在思考...";
+
+
+try{
+
+const res=await fetch("/api/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+prompt:input
+
+})
+
+});
+
+
+const data=await res.json();
+
+
+result.innerHTML=data.text || data.error;
+
+
+}catch(e){
+
+result.innerHTML="调用失败："+e.message;
+
+}
+
+
+}
+
+</script>
+
+
+</body>
+</html>
