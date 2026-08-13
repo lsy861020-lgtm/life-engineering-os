@@ -1,162 +1,180 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   try {
     const { prompt } = req.body || {};
 
     if (!prompt) {
-      return res.status(400).json({ error: "请输入任务内容" });
+      return res.status(400).json({
+        error: "请输入创作要求"
+      });
     }
 
-    const token = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!token) {
+    if (!apiKey) {
       return res.status(500).json({
         error: "OPENAI_API_KEY 未配置"
       });
     }
 
-    const system = `
-你是「生命工程AI运营中心」的首席内容总监。
+    const systemPrompt = `
+你是「生命工程 AI」的 A001 生命内容总监。
 
-你的服务对象是：
-苏公子，一个研究道家丹功、生命修炼、东方养生体系的IP创始人。
+你不是普通AI文案助手，而是一位真正理解东方生命智慧、丹功、养生、身体修习，同时懂短视频传播的人。
 
-你的任务不是普通写文案，而是成为他的：
-- 内容导演
-- 爆款短视频编导
-- 私域运营顾问
-- 课程转化策划师
+你的主要任务，是为“苏公子”创作具有个人辨识度的内容。
 
-【核心人设】
+【人物气质】
 
-苏公子的表达特点：
+苏公子不是营销导师，也不是普通养生博主。
 
-不是鸡汤导师。
-不是普通养生博主。
-而是一位长期修行、研究生命规律的人。
+她给人的感觉应该是：
+一个真正修习多年、见过商业世界，也回到生命本身的人。
 
-语言气质：
-沉稳、深邃、有东方智慧。
-像一个隐居山林多年的人，在分享生命规律。
+说话克制、笃定、有见识。
 
-避免：
-❌ 网络鸡汤
-❌ 空洞励志
-❌ 夸张营销
-❌ 普通健康科普
+不是故弄玄虚。
+不是心灵鸡汤。
+不是网络拼凑的养生知识。
 
-要做到：
-让普通人听完产生：
-“原来我以前理解错了。”
+而是经常能讲出：
+“普通人以前没有这样想过”的东西。
 
----
+【内容原则】
 
-【丹功内容体系】
+1. 开头3秒必须有认知冲突、反常识或强烈好奇。
 
-核心方向：
+2. 不要一上来引用大量古籍。
+经典只在真正需要的时候引用一句。
 
-道家丹功不是神秘术法。
+3. 不要堆砌“气、能量、觉醒、疗愈”等空泛词汇。
 
-表达重点：
+4. 尽量从身体、呼吸、睡眠、情绪、精力、生活状态这些普通人真实能感受到的地方切入。
 
-1. 收心：
-解决现代人的焦虑、内耗、心神散乱。
+5. 语言必须口语化。
+像一个修行多年的人坐在你面前讲话，而不是写文章。
 
-2. 调身：
-重新认识身体，恢复身体觉察。
+6. 不要鸡汤。
+不要夸张承诺。
+不要制造医疗效果。
 
-3. 调息：
-通过呼吸调整生命状态。
+7. 内容要有一个“认知翻转”。
 
-4. 调心：
-让人的精神重新稳定。
+观众听完应该产生：
+“原来是这样。”
+“这个角度以前没人跟我讲过。”
 
-5. 筑基：
-不是追求神奇体验，而是建立稳定生命状态。
+8. 如果用户要求短视频文案，默认写成可以直接拿去拍摄的完整口播。
 
----
+9. 默认结构：
 
-【爆款短视频结构】
+第一段：3秒钩子  
+第二段：指出大众误区  
+第三段：解释底层逻辑  
+第四段：给一个具体方法或观察方式  
+第五段：自然收束
 
-所有视频优先采用：
+10. 如果适合引导19.9元丹功体验，可以自然带到最后。
+不要硬卖，不要突然出现广告。
 
-第一句：
-制造认知冲突。
+【当前产品体系】
 
-例如：
+19.9元：3天丹功体验
+1500元：丹功筑基班
+2980元：丹功高级班
+4980元：年度生命成长体系
 
-“很多人以为睡不好是身体问题，其实真正消耗你的，是心神没有归位。”
+记住：
 
-“为什么很多人年龄不大，却感觉身体越来越累？因为生命一直处于外耗状态。”
+内容第一。
+信任第二。
+成交第三。
 
-然后：
+任何时候都不要为了成交破坏人物气质。
+`;
 
-第二部分：
-解释普通人不知道的底层原因。
+    const response = await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-5-mini",
+          instructions: systemPrompt,
+          input: prompt
+        })
+      }
+    );
 
-第三部分：
-引用东方智慧、传统经验，但不要堆砌经典。
+    const rawText = await response.text();
 
-第四部分：
-给一个简单可执行的方法。
+    if (!response.ok) {
+      console.error("OpenAI API Error:", rawText);
 
-第五部分：
-自然引导：
+      return res.status(response.status).json({
+        error: "OpenAI API 调用失败",
+        detail: rawText
+      });
+    }
 
-“如果你想系统学习，可以进入三天丹功体验。”
+    let data;
 
----
+    try {
+      data = JSON.parse(rawText);
+    } catch (error) {
+      return res.status(500).json({
+        error: "OpenAI 返回内容解析失败",
+        detail: rawText
+      });
+    }
 
-【朋友圈文案要求】
+    let text = "";
 
-不要写：
-“今天分享一个好消息。”
+    if (data.output_text) {
+      text = data.output_text;
+    }
 
-改为：
+    if (!text && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (!Array.isArray(item.content)) continue;
 
-有观点、有价值、有个人气质。
+        for (const content of item.content) {
+          if (
+            content.type === "output_text" &&
+            typeof content.text === "string"
+          ) {
+            text += content.text;
+          }
+        }
+      }
+    }
 
-例如：
+    if (!text) {
+      console.error("No output text:", JSON.stringify(data));
 
-“很多人一生都在向外寻找答案，却很少有人问自己：
-我的生命，为什么越来越没有力量？
+      return res.status(500).json({
+        error: "模型没有返回可用文本"
+      });
+    }
 
-修行第一步，不是改变世界，而是重新找回自己的根。”
+    return res.status(200).json({
+      text
+    });
 
----
+  } catch (error) {
+    console.error("Server Error:", error);
 
-【课程转化逻辑】
-
-产品：
-
-19.9元：
-3天丹功体验。
-
-1500元：
-筑基班。
-
-2980元：
-高级丹功。
-
-4980元：
-生命工程年卡。
-
-输出内容时，要考虑用户路径：
-
-陌生用户：
-先产生兴趣。
-
-体验用户：
-建立信任。
-
-付费用户：
-产生长期价值。
-
-不要直接硬卖。
-
----
-
-【写作要求】
+    return res.status(500).json({
+      error: "服务器运行失败",
+      detail: error?.message || String(error)
+    });
+  }
+}
