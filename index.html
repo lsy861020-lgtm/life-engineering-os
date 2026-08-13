@@ -1,104 +1,390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>生命工程 AI运营中心</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>生命工程 AI 运营中心</title>
 
 <style>
+*{box-sizing:border-box}
+
 body{
-background:#111827;
-color:#fff;
-font-family:Arial,"Microsoft YaHei";
 margin:0;
-padding:40px;
+background:#0d0f13;
+color:#eef0f3;
+font-family:Arial,"Microsoft YaHei",sans-serif;
 }
 
-.box{
-max-width:900px;
+.app{
+display:grid;
+grid-template-columns:250px 1fr;
+min-height:100vh;
+}
+
+.sidebar{
+background:#12151b;
+border-right:1px solid #272c35;
+padding:26px 16px;
+}
+
+.brand{
+font-size:23px;
+font-weight:800;
+margin:0 10px 5px;
+}
+
+.version{
+font-size:11px;
+color:#6f7785;
+margin:0 10px 28px;
+}
+
+.mode{
+padding:14px;
+margin:7px 0;
+border-radius:12px;
+cursor:pointer;
+color:#bfc5ce;
+transition:.15s;
+}
+
+.mode:hover{
+background:#1c222c;
+}
+
+.mode.active{
+background:#252c38;
+color:#fff;
+}
+
+.mode small{
+display:block;
+font-size:10px;
+color:#717a89;
+margin-bottom:4px;
+}
+
+.main{
+padding:38px;
+max-width:1050px;
+width:100%;
 margin:auto;
-background:#1f2937;
-padding:30px;
-border-radius:20px;
 }
 
 h1{
-font-size:40px;
+font-size:32px;
+margin:0 0 8px;
+}
+
+.desc{
+color:#858d9b;
+margin-bottom:25px;
+}
+
+.card{
+background:#151922;
+border:1px solid #282e39;
+border-radius:18px;
+padding:22px;
+margin:16px 0;
 }
 
 textarea{
 width:100%;
-height:180px;
-background:#111827;
+min-height:155px;
+background:#0d1015;
+border:1px solid #313846;
+border-radius:13px;
+padding:16px;
 color:white;
-border:1px solid #374151;
-border-radius:10px;
-padding:15px;
 font-size:16px;
+resize:vertical;
+outline:none;
+}
+
+textarea:focus{
+border-color:#687184;
 }
 
 button{
-margin-top:20px;
-padding:15px 30px;
 border:0;
 border-radius:10px;
-background:white;
-color:#111;
-font-size:18px;
+padding:11px 17px;
+font-size:14px;
+font-weight:700;
 cursor:pointer;
+margin:10px 7px 0 0;
 }
 
-#result{
-margin-top:30px;
+.primary{
+background:#f1f3f5;
+color:#111;
+}
+
+.secondary{
+background:#242a35;
+color:#eef1f4;
+}
+
+.feedback{
+margin-top:18px;
+padding-top:16px;
+border-top:1px solid #282e39;
+}
+
+.output{
 white-space:pre-wrap;
 line-height:1.8;
+font-size:16px;
+min-height:200px;
+}
+
+.status{
+font-size:12px;
+color:#777f8c;
+margin-top:10px;
+}
+
+@media(max-width:800px){
+
+.app{
+grid-template-columns:1fr;
+}
+
+.sidebar{
+display:flex;
+overflow:auto;
+border-right:0;
+border-bottom:1px solid #272c35;
+padding:10px;
+}
+
+.brand,.version{
+display:none;
+}
+
+.mode{
+min-width:125px;
+text-align:center;
+}
+
+.main{
+padding:20px;
+}
+
 }
 </style>
-
 </head>
 
 
 <body>
 
-<div class="box">
+<div class="app">
 
-<h1>生命工程 AI</h1>
+<aside class="sidebar">
 
-<p>
-你的内容运营智能助手
-</p>
+<div class="brand">生命工程</div>
+<div class="version">A001 内容总监 · V1.0</div>
 
-<textarea id="input"
-placeholder="输入你的需求，例如：
-帮我写一个丹功短视频爆款脚本
-"></textarea>
+<div class="mode active" data-mode="topics">
+<small>01</small>
+今日选题
+</div>
+
+<div class="mode" data-mode="video">
+<small>02</small>
+爆款短视频
+</div>
+
+<div class="mode" data-mode="moments">
+<small>03</small>
+朋友圈
+</div>
+
+<div class="mode" data-mode="depth">
+<small>04</small>
+IP深度内容
+</div>
+
+<div class="mode" data-mode="product">
+<small>05</small>
+产品内容
+</div>
+
+<div class="mode" data-mode="rewrite">
+<small>06</small>
+内容改稿
+</div>
+
+</aside>
 
 
-<button onclick="runAI()">
-开始创作
+<main class="main">
+
+<h1 id="title">今日选题</h1>
+
+<div class="desc" id="description">
+不知道今天拍什么，直接把任务交给内容总监。
+</div>
+
+
+<div class="card">
+
+<textarea
+id="task"
+placeholder="例如：今天想讲丹功，但不知道讲什么，给我5个值得拍的选题。"
+></textarea>
+
+<button class="primary" id="runButton" onclick="runAI()">
+开始工作
 </button>
 
+<button class="secondary" onclick="clearAll()">
+清空
+</button>
 
-<div id="result"></div>
+<div class="status" id="status"></div>
 
+</div>
+
+
+<div class="card">
+
+<div class="output" id="result">
+等待任务……
+</div>
+
+
+<div class="feedback" id="feedback" style="display:none">
+
+<button
+class="secondary"
+onclick="quickRewrite('太浅。不要增加废话，把核心认知再往下挖一层。')">
+太浅，往下挖
+</button>
+
+<button
+class="secondary"
+onclick="quickRewrite('核心思想保留，但不够有传播力。重新寻找普通人最有感觉的入口，并重做前三秒。')">
+不够爆
+</button>
+
+<button
+class="secondary"
+onclick="quickRewrite('这版AI味明显。去掉排比、套话、标准结构感，让它更像真人当面讲话。')">
+去AI味
+</button>
+
+<button
+class="secondary"
+onclick="quickRewrite('更像苏公子本人。更克制、更有见识、更像真正经历和修习过的人。')">
+更像我
+</button>
+
+<button
+class="secondary"
+onclick="convertMode('moments','把上一版内容改成一条可以直接发的朋友圈。')">
+转朋友圈
+</button>
+
+<button
+class="secondary"
+onclick="convertMode('video','把上一版内容改成60到90秒可以直接拍的短视频口播。')">
+转短视频
+</button>
+
+</div>
+
+</div>
+
+</main>
 
 </div>
 
 
 <script>
 
-async function runAI(){
+const modeInfo = {
 
-const input=document.getElementById("input").value;
+topics:{
+title:"今日选题",
+description:"不知道今天拍什么，直接把任务交给内容总监。",
+placeholder:"例如：今天想讲丹功，但不知道讲什么，给我5个值得拍的选题。"
+},
 
+video:{
+title:"爆款短视频",
+description:"从选题、前三秒到完整口播，一次完成。",
+placeholder:"例如：讲一条为什么很多人休息一天还是很累，60秒口播。"
+},
+
+moments:{
+title:"朋友圈",
+description:"直接生成可以发布的朋友圈，而不是广告软文。",
+placeholder:"例如：写朋友圈：藏精，不卖课。"
+},
+
+depth:{
+title:"IP深度内容",
+description:"建立苏公子的思想、经历与生命观。",
+placeholder:"例如：从40岁以后为什么越来越重视生命本身，写一篇深度内容。"
+},
+
+product:{
+title:"产品内容",
+description:"内容先成立，再自然进入产品和转化。",
+placeholder:"例如：今天想推19.9丹功，从睡眠浅切入，写一条朋友圈。"
+},
+
+rewrite:{
+title:"内容改稿",
+description:"把已有内容真正改好，而不是简单润色。",
+placeholder:"把需要修改的内容或要求告诉我，例如：这篇太浅，重新往下挖。"
+}
+
+};
+
+let currentMode="topics";
+let lastOutput="";
+
+document.querySelectorAll(".mode").forEach(el=>{
+
+el.addEventListener("click",()=>{
+
+document
+.querySelectorAll(".mode")
+.forEach(x=>x.classList.remove("active"));
+
+el.classList.add("active");
+
+currentMode=el.dataset.mode;
+
+const info=modeInfo[currentMode];
+
+document.getElementById("title").textContent=info.title;
+document.getElementById("description").textContent=info.description;
+document.getElementById("task").placeholder=info.placeholder;
+
+});
+
+});
+
+
+async function callAI(prompt,mode,previous=""){
+
+const button=document.getElementById("runButton");
 const result=document.getElementById("result");
+const status=document.getElementById("status");
 
-result.innerHTML="正在思考...";
+button.disabled=true;
+button.textContent="工作中…";
 
+status.textContent="A001 正在分析内容…";
 
 try{
 
-const res=await fetch("/api/chat",{
+const response=await fetch("/api/chat",{
 
 method:"POST",
 
@@ -107,31 +393,130 @@ headers:{
 },
 
 body:JSON.stringify({
-
-prompt:input
-
+prompt,
+mode,
+previous
 })
 
 });
 
 
-const data=await res.json();
+const raw=await response.text();
+
+let data;
+
+try{
+data=JSON.parse(raw);
+}catch{
+throw new Error(raw || "服务器返回异常");
+}
 
 
-result.innerHTML=data.text || data.error;
+if(!response.ok){
+throw new Error(
+data.detail ||
+data.error ||
+"请求失败"
+);
+}
 
 
-}catch(e){
+lastOutput=data.text || "";
 
-result.innerHTML="调用失败："+e.message;
+result.textContent=lastOutput;
+
+document.getElementById("feedback").style.display=
+lastOutput ? "block" : "none";
+
+status.textContent="完成";
+
+}catch(error){
+
+result.textContent="调用失败："+error.message;
+
+status.textContent="";
+
+}finally{
+
+button.disabled=false;
+button.textContent="开始工作";
 
 }
 
+}
+
+
+function runAI(){
+
+const task=
+document.getElementById("task").value.trim();
+
+if(!task){
+return;
+}
+
+callAI(task,currentMode,lastOutput);
+
+}
+
+
+function quickRewrite(instruction){
+
+if(!lastOutput){
+return;
+}
+
+callAI(
+instruction,
+"rewrite",
+lastOutput
+);
+
+}
+
+
+function convertMode(mode,instruction){
+
+if(!lastOutput){
+return;
+}
+
+currentMode=mode;
+
+document
+.querySelectorAll(".mode")
+.forEach(el=>{
+el.classList.toggle(
+"active",
+el.dataset.mode===mode
+);
+});
+
+const info=modeInfo[mode];
+
+document.getElementById("title").textContent=info.title;
+document.getElementById("description").textContent=info.description;
+
+callAI(
+instruction,
+mode,
+lastOutput
+);
+
+}
+
+
+function clearAll(){
+
+document.getElementById("task").value="";
+document.getElementById("result").textContent="等待任务……";
+document.getElementById("feedback").style.display="none";
+document.getElementById("status").textContent="";
+lastOutput="";
 
 }
 
 </script>
-
 
 </body>
 </html>
