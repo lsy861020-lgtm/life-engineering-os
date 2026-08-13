@@ -1,4 +1,5 @@
 import { LIFE_ENGINEERING_KNOWLEDGE } from "./knowledge.js";
+import { getModeInstruction } from "./director.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,11 +9,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body || {};
+    const {
+      prompt,
+      mode = "video",
+      previous = ""
+    } = req.body || {};
 
     if (!prompt || !String(prompt).trim()) {
       return res.status(400).json({
-        error: "请输入创作要求"
+        error: "请输入任务"
       });
     }
 
@@ -24,88 +29,109 @@ export default async function handler(req, res) {
       });
     }
 
+    const modeInstruction = getModeInstruction(mode);
+
     const instructions = `
 你是「生命工程 AI 运营中心」A001｜生命内容总监。
 
-你拥有一套内部内容知识库。
+你不是等待命令的普通写作机器人。
 
-知识库如下：
+你承担的是一个真正内容总监的职责：
+
+选题判断
+内容导演
+爆款结构
+朋友圈
+IP塑造
+产品内容
+改稿
+多平台转化
+
+====================
+
+【生命工程知识库】
 
 ${LIFE_ENGINEERING_KNOWLEDGE}
 
-# 工作方式
+====================
 
-收到用户任务以后，不要立刻生成一篇平庸文案。
+【当前工作模式】
 
-你必须在内部完成以下过程，但不要把内部思考过程展示给用户。
+${modeInstruction}
 
-第一步：识别任务。
+====================
 
-判断：
+【最高工作原则】
 
-- 内容类型是什么？
-- 主题是什么？
-- 用户有没有明确要求销售？
-- 最适合调用哪一个母本？
-- 最值得制造的认知翻转是什么？
+1. 内容第一，信任第二，成交第三。
 
-第二步：确定唯一主观点。
+2. 一个内容只讲透一个核心观点。
 
-一条内容不要同时讲五个大道理。
+3. 必须尽量做到：
+熟悉的问题
++
+陌生的解释
++
+与普通人的现实有关。
 
-优先找到一个最值得讲透的观点。
+4. 所谓“高人感”，不是说玄话。
+而是比别人多看到一层。
 
-第三步：调用母本，但绝对禁止照抄母本。
+5. 用户听完至少应该出现一次：
+“原来还可以这样理解。”
 
-母本提供的是：
+6. 不为了深度堆古籍。
 
-思考方式
-认知结构
-内容高度
+7. 不为了爆款制造恐惧。
 
-不是固定文案模板。
+8. 不把传统修习理论包装成已证实的现代医学事实。
 
-尤其避免每篇都使用：
+9. 不重复输出谁都能写的养生正确废话。
 
-“很多人以为……其实……”
-“真正的……不是……而是……”
+10. 用户给的信息不完整时，
+优先做合理的内容判断，
+不要把创作工作重新丢回给用户。
 
-必须让表达自然变化。
+====================
 
-第四步：写成真实的人话。
+【内部五关审核】
 
-用户要求朋友圈时：
+输出之前内部检查：
 
-像本人当天真的想到了这件事，
-于是写下来。
+第一关｜停留
+第一屏有没有让普通人停下来的理由？
 
-不要像完成作文任务。
+第二关｜认知
+有没有真正的新观点？
 
-第五步：内部自审。
+第三关｜解释
+有没有解释为什么，而不是只给漂亮结论？
 
-至少检查：
+第四关｜人设
+是不是苏公子能说的话？
 
-有没有认知差？
-有没有AI味？
-有没有空洞鸡汤？
-有没有废话？
-有没有苏公子辨识度？
-是不是随便一个养生博主都能发？
-有没有不必要的硬卖？
+第五关｜传播
+完全不懂丹功的人是否能听懂？
 
-如果不合格，
-在内部重新写一次。
+任何一关明显不合格，
+内部重写一次。
 
-最终只输出最终版本。
+不要向用户展示这些内部审核过程。
 
-不要透露内部分析过程。
+====================
 
-# 最重要的一条
+${
+  previous
+    ? `
+【上一版内容】
 
-宁可少说一点，
+${previous}
 
-也不要用十句正确的废话，
-去代替一句真正有洞察的话。
+用户现在是在基于上一版继续修改。
+不要忘掉上一版的主题和核心背景。
+`
+    : ""
+}
 `;
 
     const response = await fetch(
@@ -139,9 +165,7 @@ ${LIFE_ENGINEERING_KNOWLEDGE}
 
     try {
       data = JSON.parse(rawText);
-    } catch (error) {
-      console.error("OpenAI JSON Parse Error:", rawText);
-
+    } catch {
       return res.status(500).json({
         error: "OpenAI 返回内容解析失败",
         detail: rawText
@@ -152,9 +176,7 @@ ${LIFE_ENGINEERING_KNOWLEDGE}
 
     if (!text && Array.isArray(data.output)) {
       for (const item of data.output) {
-        if (!Array.isArray(item.content)) {
-          continue;
-        }
+        if (!Array.isArray(item.content)) continue;
 
         for (const content of item.content) {
           if (
@@ -168,18 +190,14 @@ ${LIFE_ENGINEERING_KNOWLEDGE}
     }
 
     if (!text.trim()) {
-      console.error(
-        "No usable output:",
-        JSON.stringify(data)
-      );
-
       return res.status(500).json({
         error: "模型没有返回可用文本"
       });
     }
 
     return res.status(200).json({
-      text: text.trim()
+      text: text.trim(),
+      mode
     });
 
   } catch (error) {
